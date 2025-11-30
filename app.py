@@ -79,21 +79,21 @@ if df is not None:
     # 1 BMI Histogram
     if col1.button("📌 BMI Distribution"):
         st.subheader("📌 BMI Distribution")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.histplot(df["bmi"], kde=True, bins=30, ax=ax)
         st.pyplot(fig)
 
     # 2 Sleep Hours
     if col2.button("😴 Sleep Hours Distribution"):
         st.subheader("😴 Sleep Hours Distribution")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.histplot(df["sleep_hours"], kde=True, color='green', bins=30, ax=ax)
         st.pyplot(fig)
 
     # 3 Diet Score
     if col3.button("🥗 Diet Score Distribution"):
         st.subheader("🥗 Diet Score Distribution")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.histplot(df["diet_score_v2"], kde=True, color='orange', bins=30, ax=ax)
         st.pyplot(fig)
 
@@ -102,13 +102,13 @@ if df is not None:
 
     if col4.button("🔥 Activity vs Calories"):
         st.subheader("🔥 Activity Level vs Calorie Need")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.boxplot(x="activity_mult", y="daily_calorie_need", data=df, ax=ax)
         st.pyplot(fig)
 
     if col5.button("⚖️ BMI vs Calories"):
         st.subheader("⚖️ BMI vs Daily Calorie Need")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.scatterplot(x="bmi", y="daily_calorie_need",
                         hue="activity_mult", palette="coolwarm",
                         data=df, ax=ax)
@@ -116,7 +116,7 @@ if df is not None:
 
     if col6.button("💧 Water Intake Chart"):
         st.subheader("💧 Water Intake Distribution")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.histplot(df["water_l_per_day"], kde=True, color='skyblue', bins=20, ax=ax)
         st.pyplot(fig)
 
@@ -125,20 +125,20 @@ if df is not None:
 
     if col7.button("🍔 Junk Food Consumption"):
         st.subheader("🍔 Junk Food Consumption per Week")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.countplot(x="junk_food_per_week", data=df, ax=ax)
         ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
         st.pyplot(fig)
 
     if col8.button("⚡ Stress Score Distribution"):
         st.subheader("⚡ Stress Score Distribution")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.histplot(df["stress_score"], kde=True, color='red', bins=20, ax=ax)
         st.pyplot(fig)
 
     if col9.button("🍽 Meals per Day Chart"):
         st.subheader("🍽 Meals per Day")
-        fig, ax = plt.subplots(figsize=(8,4))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.countplot(x="meals_per_day", data=df, ax=ax)
         st.pyplot(fig)
 
@@ -147,19 +147,19 @@ if df is not None:
 
     if col10.button("🛌 Sleep Quality Pie Chart"):
         st.subheader("🛌 Sleep Quality Breakdown")
-        fig, ax = plt.subplots(figsize=(5,5))
+        fig, ax = plt.subplots(figsize=(6,3))
         df["sleep_quality"].value_counts().plot.pie(autopct='%1.1f%%', ax=ax)
         st.pyplot(fig)
 
     if col11.button("🍎 Diet Quality Pie Chart"):
         st.subheader("🍎 Diet Quality Breakdown")
-        fig, ax = plt.subplots(figsize=(5,5))
+        fig, ax = plt.subplots(figsize=(6,3))
         df["diet_quality"].value_counts().plot.pie(autopct='%1.1f%%', ax=ax)
         st.pyplot(fig)
 
     if col12.button("🔥 Correlation Heatmap"):
         st.subheader("🔥 Feature Correlation Heatmap")
-        fig, ax = plt.subplots(figsize=(10,6))
+        fig, ax = plt.subplots(figsize=(6,3))
         sns.heatmap(df.corr(), annot=False, cmap="coolwarm", ax=ax)
         st.pyplot(fig)
 
@@ -203,8 +203,9 @@ with st.expander("📝 Enter Your Details for Prediction", expanded=True):
 # MAKE PREDICTION
 # -----------------------------------------------------
 if submit:
-    st.subheader("📌 Prediction Results")
-
+    st.markdown("---")
+    st.markdown("## 🎯 Your Personalized Health Predictions")
+    
     # Feature engineering
     height_m = height / 100
     bmi = weight / (height_m ** 2)
@@ -234,22 +235,109 @@ if submit:
         "stress_score": stress
     }])
 
-    # Regression
+    # Predictions
     predicted_cal = int(calorie_model.predict(X_input)[0])
-
-    # Classification
     X_scaled = scaler_class.transform(X_input)
-    sleep_pred = SLEEP_LABELS[sleep_model.predict(X_scaled)[0]]
-    diet_pred = DIET_LABELS[diet_model.predict(X_scaled)[0]]
 
-    st.success(f"🔥 **Daily Calorie Need:** {predicted_cal} kcal/day")
-    st.info(f"😴 **Sleep Quality:** {sleep_pred}")
-    st.warning(f"🍎 **Diet Quality:** {diet_pred}")
+    sleep_pred = sleep_model.predict(X_scaled)[0]
+    diet_pred = diet_model.predict(X_scaled)[0]
 
-    st.subheader("💡 Recommendations")
-    if sleep_pred == "Poor":
-        st.write("❗ Try to reduce screen time & sleep at least 7 hours.")
-    elif sleep_pred == "Average":
-        st.write("🙂 Improve bedtime habits for better sleep.")
+    sleep_label = SLEEP_LABELS[sleep_pred]
+    diet_label = DIET_LABELS[diet_pred]
+
+    # -------------------------------------------
+    # 🎛 Display Results
+    # -------------------------------------------
+    colA, colB, colC = st.columns(3)
+
+    with colA:
+        st.metric("🔥 Daily Calorie Requirement", f"{predicted_cal} kcal/day")
+
+    with colB:
+        st.metric("😴 Sleep Quality", f"{sleep_label}")
+
+    with colC:
+        st.metric("🍎 Diet Quality", f"{diet_label}")
+
+    st.markdown("---")
+    st.subheader("💡 Personalized Recommendations for You")
+
+    # -------------------------------------------
+    # 🧠 Sleep Recommendations
+    # -------------------------------------------
+    st.markdown("### 😴 Sleep Recommendations")
+
+    if sleep_label == "Poor":
+        st.error("Your sleep quality is **Poor** ⚠️")
+        st.write("""
+        - Reduce phone usage before bedtime  
+        - Maintain a consistent sleep schedule  
+        - Avoid caffeine after 5 PM  
+        - Try meditation or calm music before sleep  
+        """)
+    elif sleep_label == "Average":
+        st.warning("Your sleep quality is **Average** 🙂")
+        st.write("""
+        - Improve lighting and reduce screen time  
+        - Sleep 7–8 hours consistently  
+        - Maintain a relaxing pre-sleep routine  
+        """)
     else:
-        st.write("✔ Great! Maintain your sleep cycle.")
+        st.success("Your sleep quality is **Good** ✔")
+        st.write("""
+        - Great job! Maintain your sleep habits  
+        - Continue consistent bed & wake-up timings  
+        """)
+
+    # -------------------------------------------
+    # 🥗 Diet Recommendations
+    # -------------------------------------------
+    st.markdown("### 🍎 Diet Recommendations")
+
+    if diet_label == "Poor":
+        st.error("Your diet quality is **Poor** ⚠️")
+        st.write("""
+        - Reduce processed & junk food  
+        - Add 2–3 servings of fruits/vegetables  
+        - Increase water intake  
+        - Focus on balanced meals  
+        """)
+    elif diet_label == "Average":
+        st.warning("Your diet quality is **Average** 🙂")
+        st.write("""
+        - Increase natural fiber & fruits  
+        - Keep limiting junk food  
+        - Drink 2–3L water daily  
+        """)
+    else:
+        st.success("Your diet quality is **Good** ✔")
+        st.write("""
+        - Keep up your healthy food habits  
+        - Maintain balanced meals with proteins  
+        """)
+
+    # -------------------------------------------
+    # 🧘 Goal-Based Recommendations
+    # -------------------------------------------
+    st.markdown("### 🎯 Based on Your Fitness Goal")
+
+    if goal == "Lose Weight":
+        st.info("""
+        **Goal: Weight Loss**  
+        - Reduce daily calories by 300–400  
+        - Add light cardio (walking/cycling)  
+        - Increase protein, reduce sugar  
+        """)
+    elif goal == "Gain Weight":
+        st.info("""
+        **Goal: Weight Gain**  
+        - Increase calories by 250–350  
+        - Add resistance training  
+        - Increase protein intake  
+        """)
+    else:
+        st.info("""
+        **Goal: Maintain Weight**  
+        - Maintain balanced calorie intake  
+        - Stay consistent with current routine  
+        """)

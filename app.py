@@ -6,11 +6,17 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-st.set_page_config(page_title="AI Fitness App", layout="centered")
+# Page config
+st.set_page_config(
+    page_title="AI Fitness Health Analyzer",
+    layout="wide",
+    page_icon="💪"
+)
+
 sns.set(style="whitegrid")
 
 # -----------------------------------------------------
-# Load Models
+# LOAD MODELS
 # -----------------------------------------------------
 MODEL_DIR = "models"
 
@@ -20,7 +26,7 @@ diet_model = joblib.load(os.path.join(MODEL_DIR, "diet_clf.pkl"))
 scaler_class = joblib.load(os.path.join(MODEL_DIR, "scaler_classification.pkl"))
 
 # -----------------------------------------------------
-# Utility Functions
+# UTILITY FUNCTIONS
 # -----------------------------------------------------
 def bmr_mifflin(gender, weight, height, age):
     if gender == "male":
@@ -45,48 +51,168 @@ SLEEP_LABELS = {0: "Poor", 1: "Average", 2: "Good"}
 DIET_LABELS = {0: "Poor", 1: "Average", 2: "Good"}
 
 # -----------------------------------------------------
-# App UI
+# MAIN TITLE
 # -----------------------------------------------------
-st.title("🏋️ AI Fitness & Calorie Recommendation System")
-st.write("Enter details to get calorie needs + diet & sleep predictions.")
+st.markdown("<h1 style='text-align:center; color:#4CAF50;'>📊 AI Fitness & Lifestyle Health Analyzer</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align:center;'>Explore your health insights & predictions powered by Machine Learning</h4>", unsafe_allow_html=True)
+st.markdown("---")
 
-with st.form("form"):
-    col1, col2 = st.columns(2)
-    with col1:
-        age = st.number_input("Age", 15, 80, 22)
-        gender = st.selectbox("Gender", ["male", "female"])
-        weight = st.number_input("Weight (kg)", 30.0, 200.0, 60.0)
-        height = st.number_input("Height (cm)", 120.0, 220.0, 165.0)
-
-    with col2:
-        activity = st.selectbox("Activity Level", list(ACTIVITY_MAP.keys()))
-        goal = st.selectbox("Goal", list(GOAL_MAP.keys()))
-        sleep_hours = st.slider("Sleep Hours", 0.0, 12.0, 7.0)
-        phone_before_sleep = st.number_input("Phone Use Before Sleep (minutes)", 0, 300, 30)
-
-    col3, col4 = st.columns(2)
-    with col3:
-        meals = st.slider("Meals per Day", 1, 6, 3)
-        junk_food = st.slider("Junk Food per Week", 0, 20, 2)
-
-    with col4:
-        water = st.slider("Water Intake (Liters)", 0.0, 5.0, 2.0)
-        fruits = st.slider("Fruit/Veg Servings", 0, 10, 3)
-        stress = st.slider("Stress Level (1–5)", 1, 5, 3)
-
-    submit = st.form_submit_button("Predict")
 
 # -----------------------------------------------------
-# Process Input
+# SECTION 1 — BEAUTIFUL DATA VISUALIZATION DASHBOARD
+# -----------------------------------------------------
+st.header("📈 Interactive Data Dashboard")
+st.write("Explore insights from the health dataset by clicking the buttons below.")
+
+# Load dataset
+try:
+    df = pd.read_csv("fitness_dataset_processed.csv")
+except:
+    df = None
+    st.error("❌ Dataset not found: fitness_dataset_processed.csv")
+
+if df is not None:
+
+    # Layout grid
+    col1, col2, col3 = st.columns(3)
+
+    # 1 BMI Histogram
+    if col1.button("📌 BMI Distribution"):
+        st.subheader("📌 BMI Distribution")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.histplot(df["bmi"], kde=True, bins=30, ax=ax)
+        st.pyplot(fig)
+
+    # 2 Sleep Hours
+    if col2.button("😴 Sleep Hours Distribution"):
+        st.subheader("😴 Sleep Hours Distribution")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.histplot(df["sleep_hours"], kde=True, color='green', bins=30, ax=ax)
+        st.pyplot(fig)
+
+    # 3 Diet Score
+    if col3.button("🥗 Diet Score Distribution"):
+        st.subheader("🥗 Diet Score Distribution")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.histplot(df["diet_score_v2"], kde=True, color='orange', bins=30, ax=ax)
+        st.pyplot(fig)
+
+    # Row 2
+    col4, col5, col6 = st.columns(3)
+
+    if col4.button("🔥 Activity vs Calories"):
+        st.subheader("🔥 Activity Level vs Calorie Need")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.boxplot(x="activity_mult", y="daily_calorie_need", data=df, ax=ax)
+        st.pyplot(fig)
+
+    if col5.button("⚖️ BMI vs Calories"):
+        st.subheader("⚖️ BMI vs Daily Calorie Need")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.scatterplot(x="bmi", y="daily_calorie_need",
+                        hue="activity_mult", palette="coolwarm",
+                        data=df, ax=ax)
+        st.pyplot(fig)
+
+    if col6.button("💧 Water Intake Chart"):
+        st.subheader("💧 Water Intake Distribution")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.histplot(df["water_l_per_day"], kde=True, color='skyblue', bins=20, ax=ax)
+        st.pyplot(fig)
+
+    # Row 3
+    col7, col8, col9 = st.columns(3)
+
+    if col7.button("🍔 Junk Food Consumption"):
+        st.subheader("🍔 Junk Food Consumption per Week")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.countplot(x="junk_food_per_week", data=df, ax=ax)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+        st.pyplot(fig)
+
+    if col8.button("⚡ Stress Score Distribution"):
+        st.subheader("⚡ Stress Score Distribution")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.histplot(df["stress_score"], kde=True, color='red', bins=20, ax=ax)
+        st.pyplot(fig)
+
+    if col9.button("🍽 Meals per Day Chart"):
+        st.subheader("🍽 Meals per Day")
+        fig, ax = plt.subplots(figsize=(8,4))
+        sns.countplot(x="meals_per_day", data=df, ax=ax)
+        st.pyplot(fig)
+
+    # Row 4
+    col10, col11, col12 = st.columns(3)
+
+    if col10.button("🛌 Sleep Quality Pie Chart"):
+        st.subheader("🛌 Sleep Quality Breakdown")
+        fig, ax = plt.subplots(figsize=(5,5))
+        df["sleep_quality"].value_counts().plot.pie(autopct='%1.1f%%', ax=ax)
+        st.pyplot(fig)
+
+    if col11.button("🍎 Diet Quality Pie Chart"):
+        st.subheader("🍎 Diet Quality Breakdown")
+        fig, ax = plt.subplots(figsize=(5,5))
+        df["diet_quality"].value_counts().plot.pie(autopct='%1.1f%%', ax=ax)
+        st.pyplot(fig)
+
+    if col12.button("🔥 Correlation Heatmap"):
+        st.subheader("🔥 Feature Correlation Heatmap")
+        fig, ax = plt.subplots(figsize=(10,6))
+        sns.heatmap(df.corr(), annot=False, cmap="coolwarm", ax=ax)
+        st.pyplot(fig)
+
+st.markdown("---")
+
+
+# -----------------------------------------------------
+# SECTION 2 — MACHINE LEARNING PREDICTION
+# -----------------------------------------------------
+st.header("🤖 AI-Based Calorie, Sleep & Diet Prediction")
+
+with st.expander("📝 Enter Your Details for Prediction", expanded=True):
+
+    with st.form("prediction_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            age = st.number_input("Age", 15, 80, 22)
+            gender = st.selectbox("Gender", ["male", "female"])
+            weight = st.number_input("Weight (kg)", 30.0, 200.0, 60.0)
+            height = st.number_input("Height (cm)", 120.0, 220.0, 165.0)
+
+        with col2:
+            activity = st.selectbox("Activity Level", list(ACTIVITY_MAP.keys()))
+            goal = st.selectbox("Goal", list(GOAL_MAP.keys()))
+            sleep_hours = st.slider("Sleep Hours", 0.0, 12.0, 7.0)
+            phone_before_sleep = st.number_input("Phone before Sleep (minutes)", 0, 300, 30)
+
+        col3, col4 = st.columns(2)
+        with col3:
+            meals = st.slider("Meals per Day", 1, 6, 3)
+            junk = st.slider("Junk Food per Week", 0, 20, 2)
+
+        with col4:
+            water = st.slider("Water Intake (Liters)", 0.0, 5.0, 2.0)
+            fruits = st.slider("Fruit/Veg Servings", 0, 10, 3)
+            stress = st.slider("Stress Level (1–5)", 1, 5, 3)
+
+        submit = st.form_submit_button("Predict")
+
+# -----------------------------------------------------
+# MAKE PREDICTION
 # -----------------------------------------------------
 if submit:
+    st.subheader("📌 Prediction Results")
+
+    # Feature engineering
     height_m = height / 100
     bmi = weight / (height_m ** 2)
     bmr = bmr_mifflin(gender, weight, height, age)
     activity_mult = ACTIVITY_MAP[activity]
     goal_num = GOAL_MAP[goal]
     phone_sleep_ratio = phone_before_sleep / (sleep_hours + 1e-6)
-    diet_score = fruits + (1 if water > 1.5 else 0) - junk_food
+    diet_score = fruits + (1 if water > 1.5 else 0) - junk
 
     X_input = pd.DataFrame([{
         "age": age,
@@ -101,64 +227,29 @@ if submit:
         "phone_before_sleep": phone_before_sleep,
         "phone_sleep_ratio": phone_sleep_ratio,
         "meals_per_day": meals,
-        "junk_food_per_week": junk_food,
+        "junk_food_per_week": junk,
         "water_l_per_day": water,
         "fruit_veg_servings": fruits,
         "diet_score_v2": diet_score,
         "stress_score": stress
     }])
 
-    # -----------------------------------------------------
-    # Calorie Prediction (NO SCALING NEEDED)
-    # -----------------------------------------------------
-    predicted_calories = int(calorie_model.predict(X_input)[0])
+    # Regression
+    predicted_cal = int(calorie_model.predict(X_input)[0])
 
-    # -----------------------------------------------------
-    # Classification (WITH SCALING)
-    # -----------------------------------------------------
+    # Classification
     X_scaled = scaler_class.transform(X_input)
+    sleep_pred = SLEEP_LABELS[sleep_model.predict(X_scaled)[0]]
+    diet_pred = DIET_LABELS[diet_model.predict(X_scaled)[0]]
 
-    sleep_pred = SLEEP_LABELS[int(sleep_model.predict(X_scaled)[0])]
-    diet_pred = DIET_LABELS[int(diet_model.predict(X_scaled)[0])]
+    st.success(f"🔥 **Daily Calorie Need:** {predicted_cal} kcal/day")
+    st.info(f"😴 **Sleep Quality:** {sleep_pred}")
+    st.warning(f"🍎 **Diet Quality:** {diet_pred}")
 
-    # -----------------------------------------------------
-    # Output Section
-    # -----------------------------------------------------
-    st.subheader("🔢 Calorie Prediction")
-    st.success(f"Estimated Calories Needed: **{predicted_calories} kcal/day**")
-
-    st.subheader("🛌 Sleep Quality Prediction")
-    st.info(f"Sleep Quality: **{sleep_pred}**")
-
-    st.subheader("🍎 Diet Quality Prediction")
-    st.info(f"Diet Quality: **{diet_pred}**")
-
-    # -----------------------------------------------------
-    # Recommendations
-    # -----------------------------------------------------
-    st.subheader("💡 Personalized Suggestions")
-
-    if goal == "Lose Weight":
-        st.write("- Reduce daily calorie intake by 300–400 kcal.")
-        st.write("- Add 30–40 mins walking or light cardio.")
-
-    elif goal == "Gain Weight":
-        st.write("- Increase daily calorie intake by 250–350 kcal.")
-        st.write("- Increase protein and strength training.")
-
-    else:
-        st.write("- Maintain current diet and exercise routine.")
-
+    st.subheader("💡 Recommendations")
     if sleep_pred == "Poor":
-        st.write("⚠ Reduce phone use before sleep. Try to sleep ≥ 7 hrs.")
+        st.write("❗ Try to reduce screen time & sleep at least 7 hours.")
     elif sleep_pred == "Average":
-        st.write("🙂 Improve by reducing screen time & increasing sleep consistency.")
+        st.write("🙂 Improve bedtime habits for better sleep.")
     else:
-        st.write("✔ Great! Maintain your good sleep routine.")
-
-    if diet_pred == "Poor":
-        st.write("⚠ Reduce junk food. Add fruits, vegetables, and water.")
-    elif diet_pred == "Average":
-        st.write("🙂 Add 1–2 servings of fruits or vegetables daily.")
-    else:
-        st.write("✔ Diet looks good! Continue balanced eating.")
+        st.write("✔ Great! Maintain your sleep cycle.")
